@@ -43,4 +43,4 @@ docker image rm ffmpeg-build && docker image prune
 
 #### Are these executable files Debian-compatible?
 
-No. Even though Ubuntu is based on Debian but their software sources are somewhat different. Maybe you can find replaceable packages but I would recommend just modify the base image written in the Dockerfile of this project to a corresponding Debian image and build it.
+No. Even though Ubuntu is based on Debian, their software sources are somewhat different. Maybe you can find replaceable packages but I would recommend just modify the base image written in the Dockerfile of this project to a corresponding Debian image and build it.
