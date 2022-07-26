@@ -46,7 +46,7 @@ libxcb-xfixes0-dev
 # libssl-dev for --enable-openssl (TLS/SSL, rtmp)
 # libbluray-dev for --enable-libbluray (Blu-Ray Discs playback)
 # libmfx-dev for --enable-libmfx (Intel MediaSDK (Quick Sync Video) code)
-# libvulkan-dev for NOT --disable-vulkan
+# libvulkan-dev for NOT --disable-vulkan (Vulkan API)
 # librabbitmq-dev for --enable-librabbitmq (RabbitMQ)
 # libzmq3-dev for --enable-libzmq (ZeroMQ)
 # libsmbclient-dev for --enable-libsmbclient (Samba)
@@ -54,8 +54,8 @@ libxcb-xfixes0-dev
 # libssh-dev for --enable-libssh (SFTP)
 # libxml2-dev for --enable-libxml2 (XML parsing)
 # libzvbi-dev for --enable-libzvbi (teletext)
-# liblzma-dev for NOT --disable-lzma
-# zlib1g-dev for NOT --disable-zlib
+# liblzma-dev for NOT --disable-lzma (compression)
+# zlib1g-dev for NOT --disable-zlib (compression)
 RUN apt install -y \
 clang \
 libssl-dev \
@@ -167,7 +167,7 @@ libplacebo-dev
 # libpocketsphinx-dev for --enable-libpocketsphinx (the asr filter)
 # libgsm1-dev for --enable-libgsm (13 kbit/s RPE/LTP speech compression)
 # librubberband-dev for --enable-librubberband (time-stretching and pitch-shifting filtering)
-# libsndio-dev for NOT --disable-sndio
+# libsndio-dev for NOT --disable-sndio (MIDI)
 # liblilv-dev, lv2-dev for --enable-lv2 (LV2 audio filtering)
 # libladspa-ocaml-dev for --enable-ladspa (LADSPA audio filtering)
 # libjack-dev for --enable-libjack (JACK)
