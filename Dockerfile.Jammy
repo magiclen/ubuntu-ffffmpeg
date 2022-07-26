@@ -1,6 +1,7 @@
 ARG ffmpeg_ver=5.1
 ARG libvmaf_ver=2.3.1
 ARG libopenjpeg_ver=2.5.0
+ARG libflite_ver=2.2
 
 FROM ubuntu:22.04 AS builder
 
@@ -46,6 +47,7 @@ libxcb-xfixes0-dev
 # libssl-dev for --enable-openssl (TLS/SSL, rtmp)
 # libbluray-dev for --enable-libbluray (Blu-Ray Discs playback)
 # libmfx-dev for --enable-libmfx (Intel MediaSDK (Quick Sync Video) code)
+# libomxil-bellagio-dev for --enable-omx (Open Media Acceleration)
 # libvulkan-dev for NOT --disable-vulkan (Vulkan API)
 # librabbitmq-dev for --enable-librabbitmq (RabbitMQ)
 # libzmq3-dev for --enable-libzmq (ZeroMQ)
@@ -61,6 +63,7 @@ clang \
 libssl-dev \
 libbluray-dev \
 libmfx-dev \
+libomxil-bellagio-dev \
 libvulkan-dev \
 librabbitmq-dev \
 libzmq3-dev \
@@ -104,6 +107,7 @@ make -j$(nproc) && make install
 # libtheora-dev for --enable-libtheora (Theora)
 # libsnappy-dev for --enable-libsnappy (HAP)
 # libdavs2-dev for --enable-libdavs2 (AVS2 decoder)
+# ocl-icd-opencl-dev for --enable-opencl (OpenCL processing)
 # libopengl-dev for --enable-opengl (OpenGL rendering)
 # libv4l-dev for --enable-libv4l2 (capture video)
 # libdrm-dev for --enable-libdrm (not sure what it is for)
@@ -132,6 +136,7 @@ libxvidcore-dev \
 libtheora-dev \
 libsnappy-dev \
 libdavs2-dev \
+ocl-icd-opencl-dev \
 libopengl-dev \
 libv4l-dev \
 libdc1394-dev \
@@ -150,6 +155,14 @@ libtesseract-dev \
 libplacebo-dev
 
 # -----AUDIO-----
+
+# fetch & compile & install libflite for --enable-libflite (speech synthesis)
+ARG libflite_ver
+RUN cd /ffmpeg_build && \
+wget -O flite.tar.gz https://github.com/festvox/flite/archive/refs/tags/v${libflite_ver}.tar.gz && tar xzf flite.tar.gz && \
+cd flite-${libflite_ver} && \
+./configure --prefix="/ffmpeg_build" --disable-shared && \
+make -j$(nproc) && make install
 
 # libopus-dev for --enable-libopus (OPUS)
 # libvorbis-dev for --enable-libvorbis (OGG)
@@ -226,7 +239,7 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --prefix="/ffmpeg_build" \
 --extra-cflags="-I/ffmpeg_build/include -Wno-implicit-function-declaration" \
 --extra-ldflags="-L/ffmpeg_build/lib" \
---extra-libs="-lm -lstdc++" \
+--extra-libs="-lasound -lm -lstdc++" \
 --enable-gpl \
 --enable-version3 \
 --enable-nonfree \
@@ -237,8 +250,8 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libxcb-xfixes \
 --enable-openssl \
 --enable-libbluray \
---enable-libcaca \
 --enable-libmfx \
+--enable-omx \
 --enable-librabbitmq \
 --enable-libzmq \
 --enable-libsmbclient \
@@ -259,6 +272,7 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libtheora \
 --enable-libsnappy \
 --enable-libdavs2 \
+--enable-opencl \
 --enable-opengl \
 --enable-libv4l2 \
 --enable-libdc1394 \
@@ -271,8 +285,10 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libfribidi \
 --enable-libwebp \
 --enable-librsvg \
+--enable-libcaca \
 --enable-libtesseract \
 --enable-libplacebo \
+--enable-libflite \
 --enable-libopus \
 --enable-libvorbis \
 --enable-libfdk-aac \
@@ -348,6 +364,7 @@ libva2 \
 libvidstab1.1 \
 libzmq5 \
 libzimg2 \
+ocl-icd-libopencl1 \
 libfontconfig1 \
 libfreetype6 \
 libmfx1 \
