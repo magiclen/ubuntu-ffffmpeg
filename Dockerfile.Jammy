@@ -183,7 +183,7 @@ make -j$(nproc) && make install
 # libsndio-dev for NOT --disable-sndio (MIDI)
 # liblilv-dev, lv2-dev for --enable-lv2 (LV2 audio filtering)
 # libladspa-ocaml-dev for --enable-ladspa (LADSPA audio filtering)
-# libjack-dev for --enable-libjack (JACK)
+# libjack-jackd2-dev for --enable-libjack (JACK)
 # libsoxr-dev for --enable-libsoxr (resampler)
 # libchromaprint-dev for --enable-chromaprint (audio fingerprinter)
 # libcdio-dev, libcdio-cdda-dev, libcdio-paranoia-dev for --enable-libcdio (audio CD grabbing)
@@ -210,7 +210,7 @@ librubberband-dev \
 libsndio-dev \
 liblilv-dev lv2-dev \
 libladspa-ocaml-dev \
-libjack-dev \
+libjack-jackd2-dev \
 libsoxr-dev \
 libchromaprint-dev \
 libcdio-dev libcdio-cdda-dev libcdio-paranoia-dev \
@@ -333,7 +333,7 @@ RUN apt update -y
 
 # If you want to run FFmpeg executable files on other Ubuntu-22.04-based systems, use the following command to install the required packages.
 RUN apt install -y \
-libjack0 \
+libjack-jackd2-0 \
 libdrm2 \
 libopenal1 \
 libxcb1 \
