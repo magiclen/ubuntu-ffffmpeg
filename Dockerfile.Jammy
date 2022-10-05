@@ -1,4 +1,4 @@
-ARG ffmpeg_ver=5.1
+ARG ffmpeg_ver=5.1.2
 ARG libvmaf_ver=2.3.1
 ARG libopenjpeg_ver=2.5.0
 ARG libflite_ver=2.2
