@@ -233,8 +233,6 @@ RUN wget -O ffmpeg.tar.bz2 https://ffmpeg.org/releases/ffmpeg-${ffmpeg_ver}.tar.
 
 WORKDIR /workspace/ffmpeg-${ffmpeg_ver}
 
-RUN echo 1
-
 RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --prefix="/ffmpeg_build" \
 --extra-cflags="-I/ffmpeg_build/include -Wno-implicit-function-declaration" \
