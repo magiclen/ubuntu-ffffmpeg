@@ -1,4 +1,4 @@
-ARG ffmpeg_ver=5.1.2
+ARG ffmpeg_ver=6.0
 ARG libvmaf_ver=2.3.1
 ARG libopenjpeg_ver=2.5.0
 ARG libflite_ver=2.2
@@ -16,7 +16,7 @@ WORKDIR /workspace
 # -----DESKTOP-----
 
 # libbz2-dev for NOT --disable-bzlib
-# libalsa-dev for NOT --disable-alsa
+# libalsa-ocaml-dev for NOT --disable-alsa
 # libsdl2-dev for NOT --disable-sdl2
 # libva-dev for NOT --disable-vaapi
 # llibvdpau-dev for NOT --disable-vdpau
@@ -111,7 +111,7 @@ make -j$(nproc) && make install
 # libopengl-dev for --enable-opengl (OpenGL rendering)
 # libv4l-dev for --enable-libv4l2 (capture video)
 # libdrm-dev for --enable-libdrm (not sure what it is for)
-# libfrei0r-ocaml-dev for --enable-libfribidi (frei0r video filtering)
+# libfrei0r-ocaml-dev for --enable-frei0r (frei0r video filtering)
 # libzimg for --enable-libzimg (the zscale filter)
 # libvidstab for --enable-libvidstab (video stabilization)
 # libfreetype-dev for --enable-libfreetype (draw text)
