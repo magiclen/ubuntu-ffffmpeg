@@ -1,4 +1,4 @@
-ARG ffmpeg_ver=6.0
+ARG ffmpeg_ver=6.0.1
 ARG libvmaf_ver=2.3.1
 ARG libopenjpeg_ver=2.5.0
 ARG libflite_ver=2.2
@@ -7,7 +7,7 @@ FROM ubuntu:22.04 AS builder
 
 RUN apt update -y
 
-RUN apt install -y wget build-essential automake libtool cmake meson ninja-build nasm yasm texinfo libxml2-utils
+RUN apt install -y curl build-essential automake libtool cmake meson ninja-build nasm yasm texinfo libxml2-utils
 
 RUN mkdir ffmpeg_build
 
@@ -80,7 +80,7 @@ zlib1g-dev
 # fetch & compile & install libvmaf for --enable-libvmaf (video quality assessment)
 ARG libvmaf_ver
 RUN cd /ffmpeg_build && \
-wget -O vmaf.tar.gz https://github.com/Netflix/vmaf/archive/refs/tags/v${libvmaf_ver}.tar.gz && tar xzf vmaf.tar.gz && \
+curl -fL https://github.com/Netflix/vmaf/archive/refs/tags/v${libvmaf_ver}.tar.gz -o vmaf.tar.gz && tar xzf vmaf.tar.gz && \
 mkdir -p vmaf-${libvmaf_ver}/libvmaf/build && \
 cd vmaf-${libvmaf_ver}/libvmaf/build && \
 meson setup --buildtype=release --prefix "/ffmpeg_build" --libdir="/ffmpeg_build/lib" --default-library=static .. && \
@@ -89,7 +89,7 @@ ninja && ninja install
 # fetch & compile & install libopenjpeg for --enable-libopenjpeg (JPEG 2000)
 ARG libopenjpeg_ver
 RUN cd /ffmpeg_build && \
-wget -O openjpeg.tar.gz https://github.com/uclouvain/openjpeg/archive/refs/tags/v${libopenjpeg_ver}.tar.gz && tar xzf openjpeg.tar.gz && \
+curl -fL https://github.com/uclouvain/openjpeg/archive/refs/tags/v${libopenjpeg_ver}.tar.gz -o openjpeg.tar.gz && tar xzf openjpeg.tar.gz && \
 mkdir -p openjpeg-${libopenjpeg_ver}/build && \
 cd openjpeg-${libopenjpeg_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
@@ -159,7 +159,7 @@ libplacebo-dev
 # fetch & compile & install libflite for --enable-libflite (speech synthesis)
 ARG libflite_ver
 RUN cd /ffmpeg_build && \
-wget -O flite.tar.gz https://github.com/festvox/flite/archive/refs/tags/v${libflite_ver}.tar.gz && tar xzf flite.tar.gz && \
+curl -fL https://github.com/festvox/flite/archive/refs/tags/v${libflite_ver}.tar.gz -o flite.tar.gz && tar xzf flite.tar.gz && \
 cd flite-${libflite_ver} && \
 ./configure --prefix="/ffmpeg_build" --disable-shared && \
 make -j$(nproc) && make install
@@ -229,7 +229,7 @@ libaribb24-dev
 # -----FFMPEG-----
 
 ARG ffmpeg_ver
-RUN wget -O ffmpeg.tar.bz2 https://ffmpeg.org/releases/ffmpeg-${ffmpeg_ver}.tar.bz2 && tar xjf ffmpeg.tar.bz2
+RUN curl -fL https://ffmpeg.org/releases/ffmpeg-${ffmpeg_ver}.tar.bz2 -o ffmpeg.tar.bz2 && tar xjf ffmpeg.tar.bz2
 
 WORKDIR /workspace/ffmpeg-${ffmpeg_ver}
 

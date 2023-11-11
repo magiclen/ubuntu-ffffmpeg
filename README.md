@@ -14,7 +14,7 @@ However, this project still uses some static libraries which are useful but not 
 #### Install Docker
 
 ```bash
-sudo apt install docker-ce
+sudo apt install docker docker-buildx
 ```
 
 #### Compile
