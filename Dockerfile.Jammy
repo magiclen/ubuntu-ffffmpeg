@@ -1,7 +1,8 @@
-ARG ffmpeg_ver=6.0.1
-ARG libvmaf_ver=2.3.1
-ARG libopenjpeg_ver=2.5.0
+ARG ffmpeg_ver=7.0.1
+ARG libvmaf_ver=3.0.0
+ARG libopenjpeg_ver=2.5.2
 ARG libflite_ver=2.2
+ARG libaribcaption_ver=1.1.1
 
 FROM ubuntu:22.04 AS builder
 
@@ -46,6 +47,8 @@ libxcb-xfixes0-dev
 # clang for NOT --disable-cuda-llvm
 # libssl-dev for --enable-openssl (TLS/SSL, rtmp)
 # libbluray-dev for --enable-libbluray (Blu-Ray Discs playback)
+# libdvdnav-dev for --enable-libdvdnav (DVD demuxing)
+# libdvdread-dev for --enable-libdvdread (DVD demuxing)
 # libmfx-dev for --enable-libmfx (Intel MediaSDK (Quick Sync Video) code)
 # libomxil-bellagio-dev for --enable-omx (Open Media Acceleration)
 # libvulkan-dev for NOT --disable-vulkan (Vulkan API)
@@ -62,6 +65,8 @@ RUN apt install -y \
 clang \
 libssl-dev \
 libbluray-dev \
+libdvdnav-dev \
+libdvdread-dev \
 libmfx-dev \
 libomxil-bellagio-dev \
 libvulkan-dev \
@@ -96,13 +101,13 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_
 make -j$(nproc) && make install
 
 # libaom-dev for --enable-libaom (AV1)
-# libsvtav1enc-dev for --enable-libsvtav1 (AV1 encoder)
 # libdav1d-dev for --enable-libdav1d (AV1 decoder)
+# libsvtav1enc-dev for --enable-libsvtav1 (AV1 encoder)
+# libopenh264-dev for --enable-libopenh264 (H.264/AVC)
 # libvpx-dev for --enable-libvpx (VP8, VP9)
+# libx264-dev for --enable-libx264 (H.264/AVC)
 # libnuma-dev for libx265
 # libx265-dev for --enable-libx265 (H.265/HEVC)
-# libx264-dev for --enable-libx264 (H.264/AVC)
-# libopenh264-dev for --enable-libopenh264 (H.264/AVC)
 # libxvidcore-dev for --enable-libxvid (MPEG-4/Xvid encoder)
 # libtheora-dev for --enable-libtheora (Theora)
 # libsnappy-dev for --enable-libsnappy (HAP)
@@ -117,21 +122,23 @@ make -j$(nproc) && make install
 # libfreetype-dev for --enable-libfreetype (draw text)
 # libfontconfig1-dev for --enable-libfontconfig1 (draw text)
 # libfribidi-dev for --enable-libfribidi (draw text)
+# libharfbuzz-dev for --enable-libharfbuzz (draw text)
 # libwebp-dev for --enable-libwebp (WebP)
 # libjpeg-dev for --enable-libopenjpeg (JPEG)
 # librsvg2-dev for --enable-librsvg (SVG rasterization)
 # libcaca-dev for --enable-libcaca (converts images into colored ASCII art)
 # libtesseract-dev for --enable-libtesseract (the ocr filter)
+# libqrencode-dev for --enable-libqrencode (QR encode generation)
 # libplacebo-dev for --enable-libplacebo (not sure what it is for)
 RUN apt install -y \
 libaom-dev \
-libsvtav1enc-dev \
 libdav1d-dev \
+libsvtav1enc-dev \
+libopenh264-dev \
 libvpx-dev \
+libx264-dev \
 libnuma-dev \
 libx265-dev \
-libx264-dev \
-libopenh264-dev \
 libxvidcore-dev \
 libtheora-dev \
 libsnappy-dev \
@@ -147,11 +154,13 @@ libvidstab-dev \
 libfreetype-dev \
 libfontconfig1-dev \
 libfribidi-dev \
+libharfbuzz-dev \
 libwebp-dev \
 libjpeg-dev \
 librsvg2-dev \
 libcaca-dev \
 libtesseract-dev \
+libqrencode-dev \
 libplacebo-dev
 
 # -----AUDIO-----
@@ -220,6 +229,15 @@ libopenmpt-dev
 
 # -----SUBTITLE-----
 
+# fetch & compile & install libaribcaption for --enable-libaribcaption (caption decoding)
+ARG libaribcaption_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/xqq/libaribcaption/archive/refs/tags/v${libaribcaption_ver}.tar.gz -o libaribcaption.tar.gz && tar xzf libaribcaption.tar.gz && \
+mkdir -p libaribcaption-${libaribcaption_ver}/build && \
+cd libaribcaption-${libaribcaption_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" .. && \
+make -j$(nproc) && make install
+
 # libass-dev for --enable-libass (ASS)
 # libaribb24-dev for --enable-libaribb24 (caption decoding)
 RUN apt install -y \
@@ -248,6 +266,8 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libxcb-xfixes \
 --enable-openssl \
 --enable-libbluray \
+--enable-libdvdnav \
+--enable-libdvdread \
 --enable-libmfx \
 --enable-omx \
 --enable-librabbitmq \
@@ -260,12 +280,12 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libvmaf \
 --enable-libopenjpeg \
 --enable-libaom \
---enable-libsvtav1 \
 --enable-libdav1d \
---enable-libvpx \
---enable-libx265 \
---enable-libx264 \
+--enable-libsvtav1 \
 --enable-libopenh264 \
+--enable-libvpx \
+--enable-libx264 \
+--enable-libx265 \
 --enable-libxvid \
 --enable-libtheora \
 --enable-libsnappy \
@@ -281,10 +301,12 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libfreetype \
 --enable-libfontconfig \
 --enable-libfribidi \
+--enable-libharfbuzz \
 --enable-libwebp \
 --enable-librsvg \
 --enable-libcaca \
 --enable-libtesseract \
+--enable-libqrencode \
 --enable-libplacebo \
 --enable-libflite \
 --enable-libopus \
@@ -314,6 +336,7 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --enable-libopenmpt \
 --enable-libass \
 --enable-libaribb24 \
+--enable-libaribcaption \
 || (cat ffbuild/config.log | tail -n 50 && exit 1)
 
 RUN make -j$(nproc)
@@ -363,9 +386,12 @@ libvidstab1.1 \
 libzmq5 \
 libzimg2 \
 ocl-icd-libopencl1 \
+libqrencode4 \
 libfontconfig1 \
 libfreetype6 \
 libmfx1 \
+libdvdnav4 \
+libdvdread8 \
 libxml2 \
 libbz2-1.0 \
 libgme0 \
