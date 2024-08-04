@@ -24,7 +24,7 @@ docker build -t ffmpeg-build -f Dockerfile.<ubuntu_name> .
 docker run -v "$(pwd)/output":/output --name ffmpeg-build ffmpeg-build
 ```
 
-`<ubuntu_name>` can be `Jammy` (22.04).
+`<ubuntu_name>` can be `Jammy` (22.04), `Noble` (24.04).
 
 Now, the executable files should be in the `./output` directory.
 

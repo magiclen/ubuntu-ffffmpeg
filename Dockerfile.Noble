@@ -4,7 +4,7 @@ ARG libopenjpeg_ver=2.5.2
 ARG libflite_ver=2.2
 ARG libaribcaption_ver=1.1.1
 
-FROM ubuntu:22.04 AS builder
+FROM ubuntu:24.04 AS builder
 
 RUN apt update -y
 
@@ -348,11 +348,11 @@ RUN /ffmpeg_build/bin/ffmpeg --help
 
 # ----- Runtime Environment -----
 
-FROM ubuntu:22.04
+FROM ubuntu:24.04
 
 RUN apt update -y
 
-# If you want to run FFmpeg executable files on other Ubuntu-22.04-based systems, use the following command to install the required packages.
+# If you want to run FFmpeg executable files on other Ubuntu-24.04-based systems, use the following command to install the required packages.
 RUN apt install -y \
 libjack-jackd2-0 \
 libdrm2 \
@@ -361,25 +361,25 @@ libxcb1 \
 libxcb-shm0 \
 libxcb-shape0 \
 libxcb-xfixes0 \
-libcdio-paranoia2 \
-libcdio-cdda2 \
+libcdio-paranoia2t64 \
+libcdio-cdda2t64 \
 libdc1394-25 \
 libcaca0 \
 libgl1 \
 libpulse0 \
 libsdl2-2.0-0 \
 libsndio7.0 \
-libv4l-0 \
+libv4l-0t64 \
 libxv1 \
 libpocketsphinx3 \
-libsphinxbase3 \
+libsphinxbase3t64 \
 libbs2b0 \
 liblilv-0-0 \
 librubberband2 \
 libmysofa1 \
 libfribidi0 \
-libplacebo192 \
-libtesseract4 \
+libplacebo338 \
+libtesseract5 \
 libass9 \
 libva2 \
 libvidstab1.1 \
@@ -391,28 +391,30 @@ libfontconfig1 \
 libfreetype6 \
 libmfx1 \
 libdvdnav4 \
-libdvdread8 \
+libdvdread8t64 \
 libxml2 \
 libbz2-1.0 \
 libgme0 \
-libopenmpt0 \
+libopenmpt0t64 \
 libchromaprint1 \
 libbluray2 \
 librabbitmq4 \
-libsrt1.4-openssl \
+libsrt1.5-openssl \
 libssh-4 \
-libsmbclient \
-libvpx7 \
+libsmbclient0 \
+libvpx9 \
 libwebpmux3 \
 libwebp7 \
 liblzma5 \
-libaribb24-0 \
-libdav1d5 \
+libaribb24-0t64 \
+libdav1d7 \
 libdavs2-16 \
 libopencore-amrwb0 \
 librsvg2-2 \
+libzvbi0t64 \
+libsnappy1v5 \
 libaom3 \
-libcodec2-1.0 \
+libcodec2-1.2 \
 libfdk-aac2 \
 libgsm1 \
 libmp3lame0 \
@@ -420,16 +422,19 @@ libopencore-amrnb0 \
 libopus0 \
 libshine3 \
 libspeex1 \
-libsvtav1enc0 \
+libsvtav1enc1d1 \
 libtheora0 \
 libtwolame0 \
 libvo-amrwbenc0 \
 libvorbis0a \
-libx264-163 \
+libx264-164 \
 libx265-199 \
 libxvidcore4 \
-libopenh264-6 \
+libopenh264-7 \
 libsoxr0 \
+libva-drm2 \
+libva-x11-2 \
+libvdpau1 \
 libgcc-s1 \
 libnuma1 \
 libjpeg8
