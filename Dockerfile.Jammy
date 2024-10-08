@@ -4,15 +4,24 @@ ARG libopenjpeg_ver=2.5.2
 ARG libflite_ver=2.2
 ARG libaribcaption_ver=1.1.1
 
-FROM ubuntu:22.04 AS builder
+FROM nvidia/cuda:12.6.1-cudnn-devel-ubuntu22.04 AS builder
 
 RUN apt update -y
 
-RUN apt install -y curl build-essential automake libtool cmake meson ninja-build nasm yasm texinfo libxml2-utils
+RUN apt install -y curl build-essential automake libtool cmake meson ninja-build nasm yasm texinfo libxml2-utils git
 
 RUN mkdir ffmpeg_build
 
 WORKDIR /workspace
+
+# nvenc #
+RUN apt install -y git
+
+RUN git clone https://github.com/FFmpeg/nv-codec-headers \
+  && cd nv-codec-headers \
+  && make install \
+  && cd /workspace
+
 
 # -----DESKTOP-----
 
@@ -253,8 +262,13 @@ WORKDIR /workspace/ffmpeg-${ffmpeg_ver}
 
 RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
 --prefix="/ffmpeg_build" \
---extra-cflags="-I/ffmpeg_build/include -Wno-implicit-function-declaration" \
---extra-ldflags="-L/ffmpeg_build/lib" \
+--enable-cuda \
+--enable-cuvid \
+--enable-nvdec \
+--enable-nvenc \
+--enable-libnpp \
+--extra-cflags="-I/ffmpeg_build/include -I/usr/local/cuda/include -Wno-implicit-function-declaration" \
+--extra-ldflags="-L/ffmpeg_build/lib -L/usr/local/cuda/lib64" \
 --extra-libs="-lasound -lm -lstdc++" \
 --enable-gpl \
 --enable-version3 \
@@ -443,8 +457,12 @@ WORKDIR /workspace
 
 COPY --from=builder /ffmpeg_build/bin/ffmpeg /ffmpeg_build/bin/ffplay /ffmpeg_build/bin/ffprobe ./
 
+COPY --from=builder /usr/local/cuda /usr/local/cuda
+
+ENV LD_LIBRARY_PATH=/usr/local/cuda/lib64:${LD_LIBRARY_PATH}
+
 RUN chown user:user /workspace
-	 
+
 USER user
 
 RUN ldd ffmpeg

@@ -9,7 +9,7 @@ If someone only uses Ubuntu and have no need to cross compile FFmpeg for other p
 
 However, this project still uses some static libraries which are useful but not provided by Ubuntu software repositories.
 
-## Getting Start
+## Getting Started
 
 #### Install Docker
 
@@ -37,9 +37,10 @@ docker image rm ffmpeg-build && docker image prune
 
 ## Run FFmpeg Executable Files
 
-1. Open the Dockerfile you used. 
+1. Open the Dockerfile you used.
 2. Copy the `apt install` command in the runtime environment stage.
 3. Run the command in the Ubuntu system that you want to run FFmpeg executable files (to fix shared libraries not found issues).
+4. It is assumed that cuda is installed and available at /usr/local/cuda
 
 #### Are these executable files Debian-compatible?
 
