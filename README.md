@@ -21,6 +21,7 @@ sudo apt install docker.io docker-buildx
 
 ```bash
 docker build -t ffmpeg-build -f Dockerfile.<ubuntu_name> .
+chmod 777 output
 docker run -v "$(pwd)/output":/output --name ffmpeg-build ffmpeg-build
 ```
 
