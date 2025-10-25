@@ -1,233 +1,340 @@
-ARG ffmpeg_ver=7.1
-ARG libvmaf_ver=3.0.0
-ARG libopenjpeg_ver=2.5.2
-ARG libflite_ver=2.2
+ARG ffmpeg_ver=8.0
 ARG libaribcaption_ver=1.1.1
+ARG libcelt_ver=0.11.3
+ARG libilbc_ver=3.0.4
+ARG libklvanc_ver=vid.obe.1.6.0
+ARG libkvazaar_ver=2.3.2
+ARG liboapv_ver=0.2.0.4
+ARG libuavs3d_ver=1fd04917cff50fac72ae23e45f82ca6fd9130bd8
+ARG libvmaf_ver=3.0.0
+ARG libvvenc_ver=1.13.1
+ARG libxeve_ver=0.5.1
+ARG libxevd_ver=0.5.0
 
 FROM ubuntu:24.04 AS builder
 
 RUN apt update -y
 
-RUN apt install -y curl build-essential automake libtool cmake meson ninja-build nasm yasm texinfo libxml2-utils
+RUN apt install -y curl build-essential automake libtool pkg-config nasm texinfo libxml2-utils cmake meson ninja-build git
 
 RUN mkdir ffmpeg_build
 
 WORKDIR /workspace
 
-# -----DESKTOP-----
+# -----GUI/GPU/Sound-----
 
-# libbz2-dev for NOT --disable-bzlib
-# libalsa-ocaml-dev for NOT --disable-alsa
-# libsdl2-dev for NOT --disable-sdl2
-# libva-dev for NOT --disable-vaapi
-# llibvdpau-dev for NOT --disable-vdpau
-# libx11-dev for NOT --disable-xlib
-RUN apt install -y \
-libbz2-dev \
-libalsa-ocaml-dev \
-libsdl2-dev \
-libva-dev \
-libvdpau-dev \
-libx11-dev
-
+# libasound2-dev for NOT --disable-alsa
+# libsdl2-dev for NOT --disable-sdl2 (ffplay must need it)
+# libjack-jackd2-dev for --enable-libjack (JACK)
+# libvulkan-dev for NOT --disable-vulkan (Vulken)
 # libpulse-dev for --enable-libpulse
 # libxcb1-dev for --enable-libxcb
 # libxcb-shm0-dev for --enable-libxcb-shm
 # libxcb-shape0-dev for --enable-libxcb-shape
 # libxcb-xfixes0-dev for --enable-libxcb-xfixes
+# libx11-dev for NOT --disable-xlib
+# clang for NOT --disable-cuda-llvm
+# libdrm-dev for --enable-libdrm (capture)
+# libmfx-dev for --enable-libmfx (Intel MediaSDK (Quick Sync Video) code)
+# libomxil-bellagio-dev for --enable-omx (Open Media Acceleration)
+# libva-dev for NOT --disable-vaapi
+# libvdpau-dev for NOT --disable-vdpau
 RUN apt install -y \
+libasound2-dev \
+libsdl2-dev \
+libjack-jackd2-dev \
+# libvulkan-dev   # wait for 1.3.277 supported By Noble
 libpulse-dev \
 libxcb1-dev \
 libxcb-shm0-dev \
 libxcb-shape0-dev \
-libxcb-xfixes0-dev
+libxcb-xfixes0-dev \
+libx11-dev \
+clang \
+libdrm-dev \
+libmfx-dev \
+libomxil-bellagio-dev \
+libva-dev \
+libvdpau-dev
 
 # -----UTILS-----
 
-# clang for NOT --disable-cuda-llvm
-# libssl-dev for --enable-openssl (TLS/SSL, rtmp)
+# libbz2-dev for NOT --disable-bzlib
 # libbluray-dev for --enable-libbluray (Blu-Ray Discs playback)
 # libdvdnav-dev for --enable-libdvdnav (DVD demuxing)
 # libdvdread-dev for --enable-libdvdread (DVD demuxing)
-# libmfx-dev for --enable-libmfx (Intel MediaSDK (Quick Sync Video) code)
-# libomxil-bellagio-dev for --enable-omx (Open Media Acceleration)
-# libvulkan-dev for NOT --disable-vulkan (Vulkan API)
 # librabbitmq-dev for --enable-librabbitmq (RabbitMQ)
-# libzmq3-dev for --enable-libzmq (ZeroMQ)
+# librist-dev for --enable-librist (RIST)
+# librtmp-dev for --enable-librtmp (RTMP)
 # libsmbclient-dev for --enable-libsmbclient (Samba)
-# libsrt-openssl-dev for --enable-libsrt (Haivision SRT)
 # libssh-dev for --enable-libssh (SFTP)
 # libxml2-dev for --enable-libxml2 (XML parsing)
+# libzmq3-dev for --enable-libzmq (ZeroMQ)
 # libzvbi-dev for --enable-libzvbi (teletext)
 # liblzma-dev for NOT --disable-lzma (compression)
+# libssl-dev for --enable-openssl (TLS/SSL)
 # zlib1g-dev for NOT --disable-zlib (compression)
 RUN apt install -y \
-clang \
-libssl-dev \
+libbz2-dev \
 libbluray-dev \
 libdvdnav-dev \
 libdvdread-dev \
-libmfx-dev \
-libomxil-bellagio-dev \
-libvulkan-dev \
 librabbitmq-dev \
-libzmq3-dev \
+librist-dev \
+librtmp-dev \
 libsmbclient-dev \
-libsrt-openssl-dev \
 libssh-dev \
 libxml2-dev \
+libzmq3-dev \
 libzvbi-dev \
 liblzma-dev \
+libssl-dev \
 zlib1g-dev
 
 # -----VIDEO & IMAGE-----
 
+# libfrei0r-ocaml-dev for --enable-frei0r (frei0r video filtering)
+# liblcms2-dev for --enable-lcms2 (ICC profile)
+# libaom-dev for --enable-libaom (AV1)
+# libcaca-dev for --enable-libcaca (converts images into colored ASCII art)
+# libdav1d-dev for --enable-libdav1d (AV1 decoder)
+# libdavs2-dev for --enable-libdavs2 (AVS2 decoder)
+# libdc1394-dev for --enable-libdc1394 (capture FireWire camera)
+# libfontconfig1-dev for --enable-libfontconfig1 (draw text)
+# libfreetype-dev for --enable-libfreetype (draw text)
+# libfribidi-dev for --enable-libfribidi (draw text)
+# libharfbuzz-dev for --enable-libharfbuzz (draw text)
+# glslang-dev for --enable-libglslang (GLSL->SPIRV compilation for Vulkan GPU Acceleration)
+# libiec61883-dev, libavc1394-dev, libraw1394-dev for --enable-libiec61883 (capture FireWire camera)
+# libjxl-dev for --enable-libjxl (JPEG XL)
+# liblensfun-dev for --enable-liblensfun (lens correction)
+# libopencv-dev, libopencv-core-dev for --enable-libopencv (opencv video filtering)
+# libopenh264-dev for --enable-libopenh264 (H.264/AVC)
+# libopenjp2-7-dev for --enable-libopenjpeg (JPEG)
+# libplacebo-dev for --enable-libplacebo (libplacebo video filtering)
+# libqrencode-dev for --enable-libqrencode (QR encode generation)
+# librav1e-dev for --enable-librav1e (AV1 encoder)
+# librsvg2-dev for --enable-librsvg (SVG rasterization)
+# libsnappy-dev for --enable-libsnappy (HAP)
+# libsvtav1enc-dev for --enable-libsvtav1 (AV1 encoder)
+# libtesseract-dev for --enable-libtesseract (the ocr filter)
+# libtheora-dev for --enable-libtheora (Theora)
+# libv4l-dev for --enable-libv4l2 (capture video)
+# libvidstab-dev for --enable-libvidstab (video stabilization)
+# libvpx-dev for --enable-libvpx (VP8, VP9)
+# libwebp-dev for --enable-libwebp (WebP)
+# libx264-dev for --enable-libx264 (H.264/AVC)
+# libx265-dev for --enable-libx265 (H.265/HEVC)
+# libxavs2-dev for --enable-libxavs2 (AVS2 encoder)
+# libxvidcore-dev for --enable-libxvid (MPEG-4/Xvid encoder)
+# libzimg-dev for --enable-libzimg (the zscale filter)
+# ocl-icd-opencl-dev for --enable-opencl (OpenCL processing)
+# libopengl-dev for --enable-opengl (OpenGL rendering)
+RUN apt install -y \
+libfrei0r-ocaml-dev \
+liblcms2-dev \
+libaom-dev \
+libcaca-dev \
+libdav1d-dev \
+libdavs2-dev \
+libdc1394-dev \
+libfontconfig1-dev \
+libfreetype-dev \
+libfribidi-dev \
+libharfbuzz-dev \
+glslang-dev \
+libiec61883-dev libavc1394-dev libraw1394-dev \
+libjxl-dev \
+# liblensfun-dev                       # wait for 0.3.4 supported By FFmpeg, currently it supports to 2.2.0 and it's not easy to be compiled
+# libopencv-dev libopencv-core-dev     # wait for 4.6.0 supported By FFmpeg, currently it shows that it needs c++11
+libopenh264-dev \
+libopenjp2-7-dev \
+libplacebo-dev \
+libqrencode-dev \
+librav1e-dev \
+librsvg2-dev \
+libsnappy-dev \
+libsvtav1enc-dev \
+libtesseract-dev \
+libtheora-dev \
+libv4l-dev \
+libvidstab-dev \
+libvpx-dev \
+libwebp-dev \
+libx264-dev \
+libx265-dev \
+libxavs2-dev \
+libxvidcore-dev \
+libzimg-dev \
+ocl-icd-opencl-dev \
+libopengl-dev \
+libdrm-dev
+
+# -----AUDIO-----
+
+# libchromaprint-dev for --enable-chromaprint (audio fingerprinter)
+# libladspa-ocaml-dev for --enable-ladspa (LADSPA audio filtering)
+# libbs2b-dev for --enable-libbs2b (headphone spatialization)
+# libcdio-dev, libcdio-cdda-dev, libcdio-paranoia-dev for --enable-libcdio (audio CD grabbing)
+# libcodec2-dev for --enable-libcodec2 (speech codec)
+# libfdk-aac-dev for --enable-libfdk-aac (AAC)
+# flite-dev for --enable-libflite (speech synthesis)
+# libgme-dev for --enable-libgme (Game Music Emu)
+# libgsm1-dev for --enable-libgsm (13 kbit/s RPE/LTP speech compression)
+# liblc3-dev for --enable-liblc3 (LC3)
+# libmodplug-dev for --enable-libmodplug (ModPlug for module music)
+# libmp3lame-dev for --enable-libmp3lame (MP3)
+# libopencore-amrnb-dev for --enable-libopencore-amrnb (Adaptive Multi-Rate Narrowband)
+# libopencore-amrwb-dev for --enable-libopencore-amrwb (Adaptive Multi-Rate Wideband)
+# libopenmpt-dev for --enable-libopenmpt (OpenMPT for module music)
+# libopus-dev for --enable-libopus (OPUS)
+# librubberband-dev for --enable-librubberband (time-stretching and pitch-shifting filtering)
+# libshine-dev for --enable-libshine (fixed-point MP3 encoder)
+# libsoxr-dev for --enable-libsoxr (resampler)
+# libspeex-dev for --enable-libspeex (Speex)
+# libtwolame-dev for --enable-libtwolame (MP2)
+# libvo-amrwbenc-dev for --enable-libvo-amrwbenc (Adaptive Multi-Rate Wideband)
+# libvorbis-dev for --enable-libvorbis (OGG)
+# liblilv-dev for --enable-lv2 (LV2 audio filtering)
+# libmysofa-dev for --enable-libmysofa (the sofalizer filter)
+# libopenal-dev for --enable-openal (capture audio)
+# libpocketsphinx-dev for --enable-libpocketsphinx (the asr filter)
+# libsndio-dev for NOT --disable-sndio (MIDI)
+RUN apt install -y \
+libchromaprint-dev \
+libladspa-ocaml-dev \
+libbs2b-dev \
+libcdio-dev libcdio-cdda-dev libcdio-paranoia-dev \
+libcodec2-dev \
+libfdk-aac-dev \
+flite-dev \
+libgme-dev \
+libgsm1-dev \
+# liblc3-dev   # wait for 1.1.0 supported By Noble
+libmodplug-dev \
+libmp3lame-dev \
+libopencore-amrnb-dev libopencore-amrwb-dev \
+libopenmpt-dev \
+libopus-dev \
+librubberband-dev \
+libshine-dev \
+libsoxr-dev \
+libspeex-dev \
+libtwolame-dev \
+libvo-amrwbenc-dev \
+libvorbis-dev \
+liblilv-dev \
+libmysofa-dev \
+libopenal-dev \
+libpocketsphinx-dev \
+libsndio-dev
+
+# -----SUBTITLE-----
+
+# libaribb24-dev for --enable-libaribb24 (caption decoding)
+# libass-dev for --enable-libass (ASS)
+# libsrt-openssl-dev for --enable-libsrt (Haivision SRT)
+RUN apt install -y \
+libaribb24-dev \
+libass-dev \
+libsrt-openssl-dev
+
+# -----COMPILATION - VIDEO & IMAGE-----
+
+# fetch & compile & install libklvanc for --enable-libklvanc (parsing/generation of Vertical Ancillary Data (VANC) in SDI)
+ARG libklvanc_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/stoth68000/libklvanc/archive/refs/tags/${libklvanc_ver}.tar.gz -o libklvanc.tar.gz && tar xzf libklvanc.tar.gz && \
+cd libklvanc-${libklvanc_ver} && \
+./autogen.sh --build && \
+./configure --prefix="/ffmpeg_build" --disable-shared && \
+make -j$(nproc) && make install
+
+# fetch & compile & install libkvazaar for --enable-libkvazaar (H.265/HEVC)
+ARG libkvazaar_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/ultravideo/kvazaar/releases/download/v${libkvazaar_ver}/kvazaar-${libkvazaar_ver}.tar.gz -o libkvazaar.tar.gz && tar xzf libkvazaar.tar.gz && \
+mkdir -p kvazaar-${libkvazaar_ver}/build && \
+cd kvazaar-${libkvazaar_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install
+
+# fetch & compile & install liboapv for --enable-liboapv (APC)
+ARG liboapv_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v${liboapv_ver}.tar.gz -o libkvazaar.tar.gz && tar xzf libkvazaar.tar.gz && \
+mkdir -p openapv-${liboapv_ver}/build && \
+cd openapv-${liboapv_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DOAPV_BUILD_SHARED_LIB=off .. && \
+make -j$(nproc) && make install
+
+# fetch & compile & install libuavs3d for --enable-libuavs3d (AVS3)
+ARG libuavs3d_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/uavs3/uavs3d/archive/${libuavs3d_ver}.tar.gz -o libuavs3d.tar.gz && tar xzf libuavs3d.tar.gz && \
+mkdir -p uavs3d-${libuavs3d_ver}/build && \
+cd uavs3d-${libuavs3d_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install
+
 # fetch & compile & install libvmaf for --enable-libvmaf (video quality assessment)
 ARG libvmaf_ver
 RUN cd /ffmpeg_build && \
-curl -fL https://github.com/Netflix/vmaf/archive/refs/tags/v${libvmaf_ver}.tar.gz -o vmaf.tar.gz && tar xzf vmaf.tar.gz && \
+curl -fL https://github.com/Netflix/vmaf/archive/refs/tags/v${libvmaf_ver}.tar.gz -o libvmaf.tar.gz && tar xzf libvmaf.tar.gz && \
 mkdir -p vmaf-${libvmaf_ver}/libvmaf/build && \
 cd vmaf-${libvmaf_ver}/libvmaf/build && \
 meson setup --buildtype=release --prefix "/ffmpeg_build" --libdir="/ffmpeg_build/lib" --default-library=static .. && \
 ninja && ninja install
 
-# fetch & compile & install libopenjpeg for --enable-libopenjpeg (JPEG 2000)
-ARG libopenjpeg_ver
+# fetch & compile & install libvvenc for --enable-libvvenc (H.266/VVC)
+ARG libvvenc_ver
 RUN cd /ffmpeg_build && \
-curl -fL https://github.com/uclouvain/openjpeg/archive/refs/tags/v${libopenjpeg_ver}.tar.gz -o openjpeg.tar.gz && tar xzf openjpeg.tar.gz && \
-mkdir -p openjpeg-${libopenjpeg_ver}/build && \
-cd openjpeg-${libopenjpeg_ver}/build && \
+curl -fL https://github.com/fraunhoferhhi/vvenc/archive/refs/tags/v${libvvenc_ver}.tar.gz -o libvvenc.tar.gz && tar xzf libvvenc.tar.gz && \
+mkdir -p vvenc-${libvvenc_ver}/build && \
+cd vvenc-${libvvenc_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
 make -j$(nproc) && make install
 
-# libaom-dev for --enable-libaom (AV1)
-# libdav1d-dev for --enable-libdav1d (AV1 decoder)
-# libsvtav1enc-dev for --enable-libsvtav1 (AV1 encoder)
-# libopenh264-dev for --enable-libopenh264 (H.264/AVC)
-# libvpx-dev for --enable-libvpx (VP8, VP9)
-# libx264-dev for --enable-libx264 (H.264/AVC)
-# libnuma-dev for libx265
-# libx265-dev for --enable-libx265 (H.265/HEVC)
-# libxvidcore-dev for --enable-libxvid (MPEG-4/Xvid encoder)
-# libtheora-dev for --enable-libtheora (Theora)
-# libsnappy-dev for --enable-libsnappy (HAP)
-# libdavs2-dev for --enable-libdavs2 (AVS2 decoder)
-# ocl-icd-opencl-dev for --enable-opencl (OpenCL processing)
-# libopengl-dev for --enable-opengl (OpenGL rendering)
-# libv4l-dev for --enable-libv4l2 (capture video)
-# libdrm-dev for --enable-libdrm (not sure what it is for)
-# libfrei0r-ocaml-dev for --enable-frei0r (frei0r video filtering)
-# libzimg for --enable-libzimg (the zscale filter)
-# libvidstab for --enable-libvidstab (video stabilization)
-# libfreetype-dev for --enable-libfreetype (draw text)
-# libfontconfig1-dev for --enable-libfontconfig1 (draw text)
-# libfribidi-dev for --enable-libfribidi (draw text)
-# libharfbuzz-dev for --enable-libharfbuzz (draw text)
-# libwebp-dev for --enable-libwebp (WebP)
-# libjpeg-dev for --enable-libopenjpeg (JPEG)
-# librsvg2-dev for --enable-librsvg (SVG rasterization)
-# libcaca-dev for --enable-libcaca (converts images into colored ASCII art)
-# libtesseract-dev for --enable-libtesseract (the ocr filter)
-# libqrencode-dev for --enable-libqrencode (QR encode generation)
-# libplacebo-dev for --enable-libplacebo (not sure what it is for)
-RUN apt install -y \
-libaom-dev \
-libdav1d-dev \
-libsvtav1enc-dev \
-libopenh264-dev \
-libvpx-dev \
-libx264-dev \
-libnuma-dev \
-libx265-dev \
-libxvidcore-dev \
-libtheora-dev \
-libsnappy-dev \
-libdavs2-dev \
-ocl-icd-opencl-dev \
-libopengl-dev \
-libv4l-dev \
-libdc1394-dev \
-libdrm-dev \
-libfrei0r-ocaml-dev \
-libzimg-dev \
-libvidstab-dev \
-libfreetype-dev \
-libfontconfig1-dev \
-libfribidi-dev \
-libharfbuzz-dev \
-libwebp-dev \
-libjpeg-dev \
-librsvg2-dev \
-libcaca-dev \
-libtesseract-dev \
-libqrencode-dev \
-libplacebo-dev
-
-# -----AUDIO-----
-
-# fetch & compile & install libflite for --enable-libflite (speech synthesis)
-ARG libflite_ver
+# fetch & compile & install libxeve for --enable-libxeve (EVC encoding)
+ARG libxeve_ver
 RUN cd /ffmpeg_build && \
-curl -fL https://github.com/festvox/flite/archive/refs/tags/v${libflite_ver}.tar.gz -o flite.tar.gz && tar xzf flite.tar.gz && \
-cd flite-${libflite_ver} && \
+git clone -b v${libxeve_ver} https://github.com/mpeg5/xeve.git xeve-${libxeve_ver} && \
+mkdir -p xeve-${libxeve_ver}/build && \
+cd xeve-${libxeve_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install && \
+rm /ffmpeg_build/lib/libxeve.so*
+
+# fetch & compile & install libxevd for --enable-libxevd (EVC dencoding)
+ARG libxevd_ver
+RUN cd /ffmpeg_build && \
+git clone -b v${libxevd_ver} https://github.com/mpeg5/xevd.git xevd-${libxevd_ver} && \
+mkdir -p xevd-${libxevd_ver}/build && \
+cd xevd-${libxevd_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install && \
+rm /ffmpeg_build/lib/libxevd.so*
+
+# -----COMPILATION - AUDIO-----
+
+# fetch & compile & install libcelt for --enable-libcelt (CELT)
+ARG libcelt_ver
+RUN cd /ffmpeg_build && \
+curl -fL http://downloads.xiph.org/releases/celt/celt-${libcelt_ver}.tar.gz -o libcelt.tar.gz && tar xzf libcelt.tar.gz && \
+cd celt-${libcelt_ver} && \
 ./configure --prefix="/ffmpeg_build" --disable-shared && \
 make -j$(nproc) && make install
 
-# libopus-dev for --enable-libopus (OPUS)
-# libvorbis-dev for --enable-libvorbis (OGG)
-# libfdk-aac for --enable-libfdk-aac (AAC)
-# libmp3lame-dev for --enable-libmp3lame (MP3)
-# libshine-dev for --enable-libshine (fixed-point MP3 encoder)
-# libtwolame-dev for --enable-libtwolame (MP2)
-# libopencore-amrnb-dev for --enable-libopencore-amrnb (Adaptive Multi-Rate Narrowband)
-# libopencore-amrwb-dev for --enable-libopencore-amrwb (Adaptive Multi-Rate Wideband)
-# libvo-amrwbenc-dev for --enable-libvo-amrwbenc (Adaptive Multi-Rate Wideband)
-# libspeex-dev for --enable-libspeex (Speex)
-# libcodec2-dev for --enable-libcodec2 (speech codec)
-# libopenal-dev for --enable-openal (capture audio)
-# libmysofa-dev for --enable-libmysofa (the sofalizer filter)
-# libpocketsphinx-dev for --enable-libpocketsphinx (the asr filter)
-# libgsm1-dev for --enable-libgsm (13 kbit/s RPE/LTP speech compression)
-# librubberband-dev for --enable-librubberband (time-stretching and pitch-shifting filtering)
-# libsndio-dev for NOT --disable-sndio (MIDI)
-# liblilv-dev, lv2-dev for --enable-lv2 (LV2 audio filtering)
-# libladspa-ocaml-dev for --enable-ladspa (LADSPA audio filtering)
-# libjack-jackd2-dev for --enable-libjack (JACK)
-# libsoxr-dev for --enable-libsoxr (resampler)
-# libchromaprint-dev for --enable-chromaprint (audio fingerprinter)
-# libcdio-dev, libcdio-cdda-dev, libcdio-paranoia-dev for --enable-libcdio (audio CD grabbing)
-# libgme-dev for --enable-libgme (Game Music Emu)
-# libbs2b-dev for --enable-libbs2b (not sure what it is for)
-# libopenmpt-dev for --enable-libopenmpt (not sure what it is for)
-RUN apt install -y \
-libopus-dev \
-libvorbis-dev \
-libfdk-aac-dev \
-libmp3lame-dev \
-libshine-dev \
-libtwolame-dev \
-libopencore-amrnb-dev \
-libopencore-amrwb-dev \
-libvo-amrwbenc-dev \
-libspeex-dev \
-libcodec2-dev \
-libopenal-dev \
-libmysofa-dev \
-libpocketsphinx-dev \
-libgsm1-dev \
-librubberband-dev \
-libsndio-dev \
-liblilv-dev lv2-dev \
-libladspa-ocaml-dev \
-libjack-jackd2-dev \
-libsoxr-dev \
-libchromaprint-dev \
-libcdio-dev libcdio-cdda-dev libcdio-paranoia-dev \
-libgme-dev \
-libbs2b-dev \
-libopenmpt-dev
+# fetch & compile & install libilbc for --enable-libilbc (iLBC for realtime streaming)
+ARG libilbc_ver
+RUN cd /ffmpeg_build && \
+curl -fL https://github.com/TimothyGu/libilbc/releases/download/v${libilbc_ver}/libilbc-${libilbc_ver}.tar.gz -o libilbc.tar.gz && tar xzf libilbc.tar.gz && \
+mkdir -p libilbc-${libilbc_ver}/build && \
+cd libilbc-${libilbc_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install
 
-# -----SUBTITLE-----
+# -----COMPILATION - SUBTITLE-----
 
 # fetch & compile & install libaribcaption for --enable-libaribcaption (caption decoding)
 ARG libaribcaption_ver
@@ -238,12 +345,6 @@ cd libaribcaption-${libaribcaption_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" .. && \
 make -j$(nproc) && make install
 
-# libass-dev for --enable-libass (ASS)
-# libaribb24-dev for --enable-libaribb24 (caption decoding)
-RUN apt install -y \
-libass-dev \
-libaribb24-dev
-
 # -----FFMPEG-----
 
 ARG ffmpeg_ver
@@ -251,92 +352,139 @@ RUN curl -fL https://ffmpeg.org/releases/ffmpeg-${ffmpeg_ver}.tar.bz2 -o ffmpeg.
 
 WORKDIR /workspace/ffmpeg-${ffmpeg_ver}
 
-RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig" ./configure \
+RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/usr/lib/pkgconfig" ./configure \
 --prefix="/ffmpeg_build" \
---extra-cflags="-I/ffmpeg_build/include -Wno-implicit-function-declaration" \
---extra-ldflags="-L/ffmpeg_build/lib" \
---extra-libs="-lasound -lm -lstdc++" \
+--extra-cflags="-I/ffmpeg_build/include" \
+--extra-ldflags="-L/ffmpeg_build/lib -L/ffmpeg_build/lib/oapv -L/ffmpeg_build/lib/xeve -L/ffmpeg_build/lib/xevd" \
+--extra-libs="-lm -lstdc++" \
 --enable-gpl \
 --enable-version3 \
 --enable-nonfree \
---enable-libpulse \
---enable-libxcb \
---enable-libxcb-shm \
---enable-libxcb-shape \
---enable-libxcb-xfixes \
---enable-openssl \
---enable-libbluray \
---enable-libdvdnav \
---enable-libdvdread \
---enable-libmfx \
---enable-omx \
---enable-librabbitmq \
---enable-libzmq \
---enable-libsmbclient \
---enable-libsrt \
---enable-libssh \
---enable-libxml2 \
---enable-libzvbi \
---enable-libvmaf \
---enable-libopenjpeg \
---enable-libaom \
---enable-libdav1d \
---enable-libsvtav1 \
---enable-libopenh264 \
---enable-libvpx \
---enable-libx264 \
---enable-libx265 \
---enable-libxvid \
---enable-libtheora \
---enable-libsnappy \
---enable-libdavs2 \
---enable-opencl \
---enable-opengl \
---enable-libv4l2 \
---enable-libdc1394 \
---enable-libdrm \
---enable-frei0r \
---enable-libzimg \
---enable-libvidstab \
---enable-libfreetype \
---enable-libfontconfig \
---enable-libfribidi \
---enable-libharfbuzz \
---enable-libwebp \
---enable-librsvg \
---enable-libcaca \
---enable-libtesseract \
---enable-libqrencode \
---enable-libplacebo \
---enable-libflite \
---enable-libopus \
---enable-libvorbis \
---enable-libfdk-aac \
---enable-libmp3lame \
---enable-libshine \
---enable-libtwolame \
---enable-libopencore-amrnb \
---enable-libopencore-amrwb \
---enable-libvo-amrwbenc \
---enable-libspeex \
---enable-libcodec2 \
---enable-openal \
---enable-libmysofa \
---enable-pocketsphinx \
---enable-libgsm \
---enable-librubberband \
---enable-lv2 \
---enable-ladspa \
---enable-libjack \
---enable-libsoxr \
+# --enable-avisynth          # this is for Windows
 --enable-chromaprint \
---enable-libcdio \
---enable-libgme \
---enable-libbs2b \
---enable-libopenmpt \
---enable-libass \
+--enable-frei0r \
+# --enable-gcrypt \          # use openssl instead
+# --enable-gmp \             # use openssl instead
+# --enable-gnutls \          # use openssl instead
+# --enable-jni \             # we are not using FFmpeg as libraries
+--enable-ladspa \
+--enable-lcms2 \
+--enable-libaom \
 --enable-libaribb24 \
 --enable-libaribcaption \
+--enable-libass \
+--enable-libbluray \
+--enable-libbs2b \
+--enable-libcaca \
+--enable-libcelt \
+--enable-libcdio \
+--enable-libcodec2 \
+--enable-libdav1d \
+--enable-libdavs2 \
+--enable-libdc1394 \
+--enable-libdvdnav \
+--enable-libdvdread \
+--enable-libfdk-aac \
+--enable-libflite \
+--enable-libfontconfig \
+--enable-libfreetype \
+--enable-libfribidi \
+--enable-libharfbuzz \
+--enable-libglslang \
+--enable-libgme \
+--enable-libgsm \
+--enable-libiec61883 \
+--enable-libilbc \
+--enable-libjack \
+--enable-libjxl \
+--enable-libklvanc \
+--enable-libkvazaar \
+# --enable-liblc3 \          # wait for 1.1.0 supported By Noble
+# --enable-liblcevc-dec \    # wait for 4.0.2 supported By FFmpeg, currently it supports to 2.2.0 and it's not easy to be compiled
+# --enable-liblensfun \      # wait for >0.3.4 supported By Noble
+--enable-libmodplug \
+--enable-libmp3lame \
+--enable-liboapv \
+--enable-libopencore-amrnb \
+--enable-libopencore-amrwb \
+# --enable-libopencv \       # wait for 4.6.0 supported By FFmpeg, currently it shows that it needs c++11
+--enable-libopenh264 \
+--enable-libopenjpeg \
+--enable-libopenmpt \
+# --enable-libopenvino \     # it is hard to import it
+--enable-libopus \
+--enable-libplacebo \
+--enable-libpulse \
+--enable-libqrencode \
+# --enable-libquirc \        # it is hard to import it due to its lack of build tools
+--enable-librabbitmq \
+--enable-librav1e \
+--enable-librist \
+--enable-librsvg \
+--enable-librubberband \
+--enable-librtmp \
+# --enable-libshaderc \      # use libglslang instead
+--enable-libshine \
+--enable-libsmbclient \
+--enable-libsnappy \
+--enable-libsoxr \
+--enable-libspeex \
+--enable-libsrt \
+--enable-libssh \
+--enable-libsvtav1 \
+# --enable-libtensorflow \   # it is hard to import it
+--enable-libtesseract \
+--enable-libtheora \
+# --enable-libtls \          # use openssl instead
+# --enable-libtorch \        # it is hard to import it
+--enable-libtwolame \
+--enable-libuavs3d \
+--enable-libv4l2 \
+--enable-libvidstab \
+--enable-libvmaf \
+--enable-libvo-amrwbenc \
+--enable-libvorbis \
+--enable-libvpx \
+--enable-libvvenc \
+--enable-libwebp \
+--enable-libx264 \
+--enable-libx265 \
+--enable-libxeve \
+--enable-libxevd \
+# --enable-libxavs \         # it is hard to import it due to its lack of build tools
+--enable-libxavs2 \
+--enable-libxcb \
+--enable-libxcb-shm \
+--enable-libxcb-xfixes \
+--enable-libxcb-shape \
+--enable-libxvid \
+--enable-libxml2 \
+--enable-libzimg \
+--enable-libzmq \
+--enable-libzvbi \
+--enable-lv2 \
+# --enable-decklink \        # it is hard to import it
+# --enable-mbedtls \         # use openssl instead
+# --enable-mediacodec \      # this is for Android
+# --enable-mediafoundation \ # this is for Windows
+--enable-libmysofa \
+# --enable-ohcodec \         # this is for Harmony
+--enable-openal \
+--enable-opencl \
+--enable-opengl \
+--enable-openssl \
+--enable-pocketsphinx \
+# --enable-vapoursynth \     # it is hard to import it
+# --enable-whisper \         # it is hard to import it
+# --enable-cuda-nvcc \       # it is hard to import it
+--enable-libmfx \
+# --enable-libvpl \          # use libmfx instead
+# --enable-libnpp \          # it is hard to import it
+# --enable-mmal \            # this is for Raspberry Pi
+--enable-omx \
+# --enable-omx-rpi \         # this is for Raspberry Pi
+# -enable-rkmpp \            # this is for Rockchip
+# --enable-vulkan-static \   # wait for 1.3.277 supported By Noble
 || (cat ffbuild/config.log | tail -n 50 && exit 1)
 
 RUN make -j$(nproc)
@@ -354,99 +502,82 @@ RUN apt update -y
 
 # If you want to run FFmpeg executable files on other Ubuntu-24.04-based systems, use the following command to install the required packages.
 RUN apt install -y \
-libjack-jackd2-0 \
-libdrm2 \
-libopenal1 \
-libxcb1 \
-libxcb-shm0 \
-libxcb-shape0 \
-libxcb-xfixes0 \
-libcdio-paranoia2t64 \
-libcdio-cdda2t64 \
-libdc1394-25 \
-libcaca0 \
-libgl1 \
-libpulse0 \
 libsdl2-2.0-0 \
 libsndio7.0 \
-libv4l-0t64 \
 libxv1 \
-libpocketsphinx3 \
-libsphinxbase3t64 \
-libbs2b0 \
-liblilv-0-0 \
-librubberband2 \
-libmysofa1 \
-libfribidi0 \
-libplacebo338 \
-libtesseract5 \
-libass9 \
-libva2 \
-libvidstab1.1 \
-libzmq5 \
-libzimg2 \
-ocl-icd-libopencl1 \
-libqrencode4 \
-libfontconfig1 \
-libfreetype6 \
-libmfx1 \
-libdvdnav4 \
-libdvdread8t64 \
-libxml2 \
-libbz2-1.0 \
-libgme0 \
-libopenmpt0t64 \
+libasound2t64 \
 libchromaprint1 \
-libbluray2 \
-librabbitmq4 \
-libsrt1.5-openssl \
-libssh-4 \
-libsmbclient0 \
-libvpx9 \
-libwebpmux3 \
-libwebp7 \
-liblzma5 \
+libaom3 \
 libaribb24-0t64 \
+libass9 \
+libbluray2 \
+libbs2b0 \
+libcaca0 \
+libcdio-cdda2t64 libcdio-paranoia2t64 libcodec2-1.2 \
 libdav1d7 \
 libdavs2-16 \
-libopencore-amrwb0 \
-librsvg2-2 \
-libzvbi0t64 \
-libsnappy1v5 \
-libaom3 \
-libcodec2-1.2 \
+libdc1394-25 \
+libdvdnav4 \
+libdvdread8t64 \
 libfdk-aac2 \
+libflite1 \
+libgme0 \
 libgsm1 \
-libmp3lame0 \
+libavc1394-0 libiec61883-0 libraw1394-11 \
+libjack-jackd2-0 \
+libjxl0.7 \
+libmodplug1 \
 libopencore-amrnb0 \
-libopus0 \
+libopencore-amrwb0 \
+libopenh264-7 \
+libopenjp2-7 \
+libopenmpt0t64 \
+libplacebo338 \
+libqrencode4 \
+librabbitmq4 \
+librist4 \
+librav1e0 \
+librubberband2 \
+librtmp1 \
 libshine3 \
+libsmbclient0 \
+libsnappy1v5 \
+libsoxr0 \
 libspeex1 \
+libsrt1.5-openssl \
+libssh-4 \
 libsvtav1enc1d1 \
+libtesseract5 \
 libtheora0 \
 libtwolame0 \
+libv4l-0 \
+libvidstab1.1 \
 libvo-amrwbenc0 \
-libvorbis0a \
+libvpx9 \
 libx264-164 \
 libx265-199 \
+libxavs2-13 \
+libxcb-shape0 \
 libxvidcore4 \
-libopenh264-7 \
-libsoxr0 \
+libzimg2 \
+libzmq5 \
+libzvbi0t64 \
+liblilv-0-0 \
+libmysofa1 \
+libopenal1 \
+ocl-icd-libopencl1 \
+libpocketsphinx3 \
+libdrm2 \
+libmfx1 \
 libva-drm2 \
 libva-x11-2 \
-libvdpau1 \
-libgcc-s1 \
-libnuma1 \
-libjpeg8
+libvdpau1
 
-RUN adduser --disabled-password \
-    --gecos "" \
-    --no-create-home \
-    user
+RUN useradd -M -U user && passwd -l user
 
 WORKDIR /workspace
 
-COPY --from=builder /ffmpeg_build/bin/ffmpeg /ffmpeg_build/bin/ffplay /ffmpeg_build/bin/ffprobe ./
+COPY --from=builder /ffmpeg_build/bin/ffmpeg /ffmpeg_build/bin/ffprobe /ffmpeg_build/bin/ffplay ./
 
 RUN chown user:user /workspace
 	 
@@ -456,12 +587,12 @@ RUN ldd ffmpeg
 
 RUN ./ffmpeg --help
 
-RUN ldd ffplay
-
-RUN ./ffplay --help
-
 RUN ldd ffprobe
 
 RUN ./ffprobe --help
 
-CMD cp * /output
+RUN ldd ffplay
+
+RUN ./ffplay --help
+
+CMD ["cp", "ffmpeg", "ffprobe", "ffplay", "/output"]
