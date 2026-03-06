@@ -26,7 +26,7 @@ WORKDIR /workspace
 # libasound2-dev for NOT --disable-alsa
 # libsdl2-dev for NOT --disable-sdl2 (ffplay must need it)
 # libjack-jackd2-dev for --enable-libjack (JACK)
-# libvulkan-dev for NOT --disable-vulkan (Vulken)
+# libvulkan-dev for NOT --disable-vulkan (Vulkan)
 # libpulse-dev for --enable-libpulse
 # libxcb1-dev for --enable-libxcb
 # libxcb-shm0-dev for --enable-libxcb-shm
