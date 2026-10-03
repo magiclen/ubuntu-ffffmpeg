@@ -1,15 +1,15 @@
-ARG ffmpeg_ver=8.1.2
-ARG libaribcaption_ver=1.1.1
-ARG libcelt_ver=0.11.3
+ARG ffmpeg_ver=9.0.2
+ARG libaribcaption_ver=1.1.2
 ARG libilbc_ver=3.0.4
-ARG libklvanc_ver=vid.obe.1.6.0
-ARG libmpeghdec_ver=r3.0.3
-ARG liboapv_ver=0.2.1.3
+ARG libklvanc_ver=vid.obe.1.7.0
+ARG liblcevc_dec_ver=4.2.2
+ARG libmpeghdec_ver=r4.0.1
+ARG liboapv_ver=0.3.0.0
 ARG libuavs3d_ver=0e20d2c291853f196c68922a264bcd8471d75b68
-ARG libvmaf_ver=3.1.0
+ARG libvmaf_ver=3.2.1
 ARG libvvenc_ver=1.14.0
-ARG libxeve_ver=0.5.1
-ARG libxevd_ver=0.5.0
+ARG libxeve_ver=0.7.0
+ARG libxevd_ver=0.7.0
 
 FROM ubuntu:26.04 AS builder
 
@@ -98,18 +98,21 @@ zlib1g-dev
 # libcaca-dev for --enable-libcaca (converts images into colored ASCII art)
 # libdav1d-dev for --enable-libdav1d (AV1 decoder)
 # libdc1394-dev for --enable-libdc1394 (capture FireWire camera)
-# libfontconfig1-dev for --enable-libfontconfig1 (draw text)
+# libfontconfig1-dev for --enable-libfontconfig (draw text)
 # libfreetype-dev for --enable-libfreetype (draw text)
 # libfribidi-dev for --enable-libfribidi (draw text)
 # libharfbuzz-dev for --enable-libharfbuzz (draw text)
-# glslang-dev for --enable-libglslang (GLSL->SPIRV compilation for Vulkan GPU Acceleration)
+# glslang-tools for NOT --disable-vulkan (GLSL->SPIRV compilation of the Vulkan shaders)
+# spirv-headers for NOT --disable-vulkan (the SPIR-V backend of swscale)
 # libiec61883-dev, libavc1394-dev, libraw1394-dev for --enable-libiec61883 (capture FireWire camera)
 # libjxl-dev for --enable-libjxl (JPEG XL)
 # liblensfun-dev for --enable-liblensfun (lens correction)
 # libkvazaar-dev for --enable-libkvazaar (H.265/HEVC)
+# libonnxruntime-dev for --enable-libonnxruntime (ONNX Runtime DNN module backend)
 # libopencv-dev, libopencv-core-dev for --enable-libopencv (opencv video filtering)
 # libopenh264-dev for --enable-libopenh264 (H.264/AVC)
 # libopenjp2-7-dev for --enable-libopenjpeg (JPEG)
+# libopencolorio-dev for --enable-libopencolorio (color management)
 # libplacebo-dev for --enable-libplacebo (libplacebo video filtering)
 # libqrencode-dev for --enable-libqrencode (QR encode generation)
 # librav1e-dev for --enable-librav1e (AV1 encoder)
@@ -140,14 +143,17 @@ libfontconfig1-dev \
 libfreetype-dev \
 libfribidi-dev \
 libharfbuzz-dev \
-glslang-dev \
+glslang-tools \
+spirv-headers \
 libiec61883-dev libavc1394-dev libraw1394-dev \
 libjxl-dev \
 # liblensfun-dev \                 # wait for 0.3.4 supported By FFmpeg
 libkvazaar-dev \
+libonnxruntime-dev \
 libopencv-dev libopencv-core-dev \
 libopenh264-dev \
 libopenjp2-7-dev \
+libopencolorio-dev \
 libplacebo-dev \
 libqrencode-dev \
 librav1e-dev \
@@ -165,8 +171,7 @@ libx265-dev \
 libxvidcore-dev \
 libzimg-dev \
 ocl-icd-opencl-dev \
-libopengl-dev \
-libdrm-dev
+libopengl-dev
 
 # -----AUDIO-----
 
@@ -196,7 +201,7 @@ libdrm-dev
 # liblilv-dev for --enable-lv2 (LV2 audio filtering)
 # libmysofa-dev for --enable-libmysofa (the sofalizer filter)
 # libopenal-dev for --enable-openal (capture audio)
-# libpocketsphinx-dev for --enable-libpocketsphinx (the asr filter)
+# libpocketsphinx-dev for --enable-pocketsphinx (the asr filter)
 # libsndio-dev for NOT --disable-sndio (MIDI)
 RUN apt install -y \
 libchromaprint-dev \
@@ -248,10 +253,19 @@ cd libklvanc-${libklvanc_ver} && \
 ./configure --prefix="/ffmpeg_build" --disable-shared && \
 make -j$(nproc) && make install
 
-# fetch & compile & install liboapv for --enable-liboapv (APC)
+# fetch & compile & install liblcevc_dec for --enable-liblcevc-dec (LCEVC decoding)
+ARG liblcevc_dec_ver
+RUN cd /ffmpeg_build && \
+git clone -b ${liblcevc_dec_ver} https://github.com/v-novaltd/LCEVCdec.git LCEVCdec-${liblcevc_dec_ver} && \
+mkdir -p LCEVCdec-${liblcevc_dec_ver}/build && \
+cd LCEVCdec-${liblcevc_dec_ver}/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
+make -j$(nproc) && make install
+
+# fetch & compile & install liboapv for --enable-liboapv (APV)
 ARG liboapv_ver
 RUN cd /ffmpeg_build && \
-curl -fL https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v${liboapv_ver}.tar.gz -o libkvazaar.tar.gz && tar xzf libkvazaar.tar.gz && \
+curl -fL https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v${liboapv_ver}.tar.gz -o liboapv.tar.gz && tar xzf liboapv.tar.gz && \
 mkdir -p openapv-${liboapv_ver}/build && \
 cd openapv-${liboapv_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DOAPV_BUILD_SHARED_LIB=off .. && \
@@ -294,7 +308,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_
 make -j$(nproc) && make install && \
 rm /ffmpeg_build/lib/libxeve.so*
 
-# fetch & compile & install libxevd for --enable-libxevd (EVC dencoding)
+# fetch & compile & install libxevd for --enable-libxevd (EVC decoding)
 ARG libxevd_ver
 RUN cd /ffmpeg_build && \
 git clone -b v${libxevd_ver} https://github.com/mpeg5/xevd.git xevd-${libxevd_ver} && \
@@ -305,14 +319,6 @@ make -j$(nproc) && make install && \
 rm /ffmpeg_build/lib/libxevd.so*
 
 # -----COMPILATION - AUDIO-----
-
-# fetch & compile & install libcelt for --enable-libcelt (CELT)
-ARG libcelt_ver
-RUN cd /ffmpeg_build && \
-curl -fL http://downloads.xiph.org/releases/celt/celt-${libcelt_ver}.tar.gz -o libcelt.tar.gz && tar xzf libcelt.tar.gz && \
-cd celt-${libcelt_ver} && \
-./configure --prefix="/ffmpeg_build" --disable-shared && \
-make -j$(nproc) && make install
 
 # fetch & compile & install libilbc for --enable-libilbc (iLBC for realtime streaming)
 ARG libilbc_ver
@@ -329,7 +335,7 @@ RUN cd /ffmpeg_build && \
 curl -fL https://github.com/Fraunhofer-IIS/mpeghdec/archive/refs/tags/${libmpeghdec_ver}.tar.gz -o libmpeghdec.tar.gz && tar xzf libmpeghdec.tar.gz && \
 mkdir -p mpeghdec-${libmpeghdec_ver}/build && \
 cd mpeghdec-${libmpeghdec_ver}/build && \
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DOAPV_BUILD_SHARED_LIB=off .. && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
 make -j$(nproc) && make install
 
 # -----COMPILATION - SUBTITLE-----
@@ -352,7 +358,7 @@ WORKDIR /workspace/ffmpeg-${ffmpeg_ver}
 
 RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/usr/lib/pkgconfig" ./configure \
 --prefix="/ffmpeg_build" \
---extra-cflags="-I/ffmpeg_build/include" \
+--extra-cflags="-I/ffmpeg_build/include -I/usr/include/onnxruntime" \
 --extra-ldflags="-L/ffmpeg_build/lib -L/ffmpeg_build/lib/oapv -L/ffmpeg_build/lib/xeve -L/ffmpeg_build/lib/xevd" \
 --extra-libs="-lm -lstdc++" \
 --enable-gpl \
@@ -375,7 +381,6 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/
 --enable-libbluray \
 --enable-libbs2b \
 --enable-libcaca \
---enable-libcelt \
 --enable-libcdio \
 --enable-libcodec2 \
 --enable-libdav1d \
@@ -389,7 +394,6 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/
 --enable-libfreetype \
 --enable-libfribidi \
 --enable-libharfbuzz \
---enable-libglslang \
 --enable-libgme \
 --enable-libgsm \
 --enable-libiec61883 \
@@ -399,18 +403,20 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/
 --enable-libklvanc \
 --enable-libkvazaar \
 --enable-liblc3 \
-# --enable-liblcevc-dec \    # wait for 4.0.2 supported By FFmpeg, currently it supports to 2.2.0 and it's not easy to be compiled
+--enable-liblcevc-dec \
 # --enable-liblensfun \      # wait for 0.3.4 supported By FFmpeg
 --enable-libmodplug \
 --enable-libmp3lame \
 --enable-libmpeghdec \
 --enable-liboapv \
+--enable-libonnxruntime \
 --enable-libopencore-amrnb \
 --enable-libopencore-amrwb \
 --enable-libopencv \
 --enable-libopenh264 \
 --enable-libopenjpeg \
 --enable-libopenmpt \
+--enable-libopencolorio \
 # --enable-libopenvino \     # it is hard to import it
 --enable-libopus \
 --enable-libplacebo \
@@ -423,7 +429,6 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/
 --enable-librsvg \
 --enable-librubberband \
 --enable-librtmp \
-# --enable-libshaderc \      # use libglslang instead
 --enable-libshine \
 --enable-libsmbclient \
 --enable-libsnappy \
@@ -482,11 +487,8 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/ffmpeg_build/share/pkgconfig:/
 # --enable-cuda-nvcc \       # it is hard to import it
 # --enable-libmfx \          # it is hard to import it
 --enable-libvpl \
-# --enable-libnpp \          # it is hard to import it
 # --enable-mmal \            # this is for Raspberry Pi
-# --enable-omx \             # it is hard to import it
-# --enable-omx-rpi \         # this is for Raspberry Pi
-# -enable-rkmpp \            # this is for Rockchip
+# --enable-rkmpp \           # this is for Rockchip
 --enable-vulkan-static \
 || (cat ffbuild/config.log | tail -n 50 && exit 1)
 
@@ -529,7 +531,9 @@ liblc3-1 \
 liblilv-0-0 \
 libmodplug1 \
 libmysofa1 \
+libonnxruntime1.23 \
 libopenal1 \
+libopencolorio2.5 \
 libopencore-amrnb0 \
 libopencore-amrwb0 \
 libopencv-imgproc410 \
@@ -579,7 +583,7 @@ WORKDIR /workspace
 COPY --from=builder /ffmpeg_build/bin/ffmpeg /ffmpeg_build/bin/ffprobe /ffmpeg_build/bin/ffplay ./
 
 RUN chown user:user /workspace
-	 
+
 USER user
 
 RUN ldd ffmpeg

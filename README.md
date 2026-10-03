@@ -9,7 +9,7 @@ If someone only uses Ubuntu and have no need to cross compile FFmpeg for other p
 
 However, this project still uses some static libraries which are useful but not provided by Ubuntu software repositories.
 
-## Getting Start
+## Getting Started
 
 #### Install Docker
 
@@ -25,7 +25,7 @@ chmod 777 output
 docker run -v "$(pwd)/output":/output --name ffmpeg-build ffmpeg-build
 ```
 
-`<ubuntu_name>` can be `Noble` (24.04).
+`<ubuntu_name>` can be `Noble` (24.04) or `Resolute` (26.04).
 
 Now, the executable files should be in the `./output` directory.
 

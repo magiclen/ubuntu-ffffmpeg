@@ -1,15 +1,15 @@
 ARG ffmpeg_ver=8.0.3
-ARG libaribcaption_ver=1.1.1
+ARG libaribcaption_ver=1.1.2
 ARG libcelt_ver=0.11.3
 ARG libilbc_ver=3.0.4
-ARG libklvanc_ver=vid.obe.1.6.0
+ARG libklvanc_ver=vid.obe.1.7.0
 ARG libkvazaar_ver=2.3.2
-ARG liboapv_ver=0.2.1.3
+ARG liboapv_ver=0.3.0.0
 ARG libuavs3d_ver=0e20d2c291853f196c68922a264bcd8471d75b68
-ARG libvmaf_ver=3.1.0
+ARG libvmaf_ver=3.2.1
 ARG libvvenc_ver=1.14.0
-ARG libxeve_ver=0.5.1
-ARG libxevd_ver=0.5.0
+ARG libxeve_ver=0.7.0
+ARG libxevd_ver=0.7.0
 
 FROM ubuntu:24.04 AS builder
 
@@ -100,7 +100,7 @@ zlib1g-dev
 # libdav1d-dev for --enable-libdav1d (AV1 decoder)
 # libdavs2-dev for --enable-libdavs2 (AVS2 decoder)
 # libdc1394-dev for --enable-libdc1394 (capture FireWire camera)
-# libfontconfig1-dev for --enable-libfontconfig1 (draw text)
+# libfontconfig1-dev for --enable-libfontconfig (draw text)
 # libfreetype-dev for --enable-libfreetype (draw text)
 # libfribidi-dev for --enable-libfribidi (draw text)
 # libharfbuzz-dev for --enable-libharfbuzz (draw text)
@@ -167,8 +167,7 @@ libxavs2-dev \
 libxvidcore-dev \
 libzimg-dev \
 ocl-icd-opencl-dev \
-libopengl-dev \
-libdrm-dev
+libopengl-dev
 
 # -----AUDIO-----
 
@@ -198,7 +197,7 @@ libdrm-dev
 # liblilv-dev for --enable-lv2 (LV2 audio filtering)
 # libmysofa-dev for --enable-libmysofa (the sofalizer filter)
 # libopenal-dev for --enable-openal (capture audio)
-# libpocketsphinx-dev for --enable-libpocketsphinx (the asr filter)
+# libpocketsphinx-dev for --enable-pocketsphinx (the asr filter)
 # libsndio-dev for NOT --disable-sndio (MIDI)
 RUN apt install -y \
 libchromaprint-dev \
@@ -259,10 +258,10 @@ cd kvazaar-${libkvazaar_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_SHARED_LIBS=off .. && \
 make -j$(nproc) && make install
 
-# fetch & compile & install liboapv for --enable-liboapv (APC)
+# fetch & compile & install liboapv for --enable-liboapv (APV)
 ARG liboapv_ver
 RUN cd /ffmpeg_build && \
-curl -fL https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v${liboapv_ver}.tar.gz -o libkvazaar.tar.gz && tar xzf libkvazaar.tar.gz && \
+curl -fL https://github.com/AcademySoftwareFoundation/openapv/archive/refs/tags/v${liboapv_ver}.tar.gz -o liboapv.tar.gz && tar xzf liboapv.tar.gz && \
 mkdir -p openapv-${liboapv_ver}/build && \
 cd openapv-${liboapv_ver}/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DOAPV_BUILD_SHARED_LIB=off .. && \
@@ -305,7 +304,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX="/ffmpeg_build" -DBUILD_
 make -j$(nproc) && make install && \
 rm /ffmpeg_build/lib/libxeve.so*
 
-# fetch & compile & install libxevd for --enable-libxevd (EVC dencoding)
+# fetch & compile & install libxevd for --enable-libxevd (EVC decoding)
 ARG libxevd_ver
 RUN cd /ffmpeg_build && \
 git clone -b v${libxevd_ver} https://github.com/mpeg5/xevd.git xevd-${libxevd_ver} && \
@@ -320,7 +319,7 @@ rm /ffmpeg_build/lib/libxevd.so*
 # fetch & compile & install libcelt for --enable-libcelt (CELT)
 ARG libcelt_ver
 RUN cd /ffmpeg_build && \
-curl -fL http://downloads.xiph.org/releases/celt/celt-${libcelt_ver}.tar.gz -o libcelt.tar.gz && tar xzf libcelt.tar.gz && \
+curl -fL https://downloads.xiph.org/releases/celt/celt-${libcelt_ver}.tar.gz -o libcelt.tar.gz && tar xzf libcelt.tar.gz && \
 cd celt-${libcelt_ver} && \
 ./configure --prefix="/ffmpeg_build" --disable-shared && \
 make -j$(nproc) && make install
@@ -483,7 +482,7 @@ RUN PKG_CONFIG_PATH="/ffmpeg_build/lib/pkgconfig:/usr/lib/pkgconfig" ./configure
 # --enable-mmal \            # this is for Raspberry Pi
 --enable-omx \
 # --enable-omx-rpi \         # this is for Raspberry Pi
-# -enable-rkmpp \            # this is for Rockchip
+# --enable-rkmpp \           # this is for Rockchip
 # --enable-vulkan-static \   # wait for 1.3.275 supported By FFmpeg
 || (cat ffbuild/config.log | tail -n 50 && exit 1)
 
@@ -579,7 +578,7 @@ WORKDIR /workspace
 COPY --from=builder /ffmpeg_build/bin/ffmpeg /ffmpeg_build/bin/ffprobe /ffmpeg_build/bin/ffplay ./
 
 RUN chown user:user /workspace
-	 
+
 USER user
 
 RUN ldd ffmpeg
