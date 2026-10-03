@@ -34,6 +34,7 @@ WORKDIR /workspace
 # libxcb-xfixes0-dev for --enable-libxcb-xfixes
 # libx11-dev for NOT --disable-xlib
 # clang for NOT --disable-cuda-llvm
+# libffmpeg-nvenc-dev for NOT --disable-ffnvcodec (NVIDIA NVENC/NVDEC/CUVID and CUDA filters)
 # libdrm-dev for --enable-libdrm (capture)
 # libvpl-dev for --enable-libvpl (Intel oneVPL code)
 # libva-dev for NOT --disable-vaapi
@@ -50,6 +51,7 @@ libxcb-shape0-dev \
 libxcb-xfixes0-dev \
 libx11-dev \
 clang \
+libffmpeg-nvenc-dev \
 libdrm-dev \
 libvpl-dev \
 libva-dev \
@@ -181,7 +183,7 @@ libopengl-dev
 # libcdio-dev, libcdio-cdda-dev, libcdio-paranoia-dev for --enable-libcdio (audio CD grabbing)
 # libcodec2-dev for --enable-libcodec2 (speech codec)
 # libfdk-aac-dev for --enable-libfdk-aac (AAC)
-# flite-dev for --enable-libflite (speech synthesis)
+# flite1-dev for --enable-libflite (speech synthesis)
 # libgme-dev for --enable-libgme (Game Music Emu)
 # libgsm1-dev for --enable-libgsm (13 kbit/s RPE/LTP speech compression)
 # liblc3-dev for --enable-liblc3 (LC3)
@@ -210,7 +212,7 @@ libbs2b-dev \
 libcdio-dev libcdio-cdda-dev libcdio-paranoia-dev \
 libcodec2-dev \
 libfdk-aac-dev \
-flite-dev \
+flite1-dev \
 libgme-dev \
 libgsm1-dev \
 liblc3-dev \

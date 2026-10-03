@@ -5,7 +5,7 @@ This project aims to provide Dockerfile(s) to compile full-featured FFmpeg execu
 
 #### Why not static?
 
-If someone only uses Ubuntu and have no need to cross compile FFmpeg for other platform, dynamic linking can help re-using a lot of shared libraries and generating smaller and more efficient executable files.
+If someone only uses Ubuntu and has no need to cross compile FFmpeg for other platforms, dynamic linking can help re-using a lot of shared libraries and generating smaller and more efficient executable files.
 
 However, this project still uses some static libraries which are useful but not provided by Ubuntu software repositories.
 
@@ -34,6 +34,7 @@ Now, the executable files should be in the `./output` directory.
 ```bash
 docker rm ffmpeg-build
 docker image rm ffmpeg-build && docker image prune
+docker builder prune
 ```
 
 ## Run FFmpeg Executable Files
@@ -44,4 +45,4 @@ docker image rm ffmpeg-build && docker image prune
 
 #### Are these executable files Debian-compatible?
 
-No. Even though Ubuntu is based on Debian, their software sources are somewhat different. Maybe you can find replaceable packages but I would recommend just modify the base image written in the Dockerfile of this project to a corresponding Debian image and build it.
+No. Even though Ubuntu is based on Debian, their software sources are somewhat different. Maybe you can find replaceable packages but I would recommend just modifying the base image written in the Dockerfile of this project to a corresponding Debian image and build it.
